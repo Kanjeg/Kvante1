@@ -8,15 +8,33 @@ h=1
 k_0=20
 s=1.5
 E=k_0**2*h**2/(2*m)
+V=0.5*E
 w=E/h
 dx=L/(N-1)
 v_g=k_0*h/m
-dt=0.01*h/(h**2/(2*m*dx**2))
+dt=0.01*h/(h**2/(2*m*dx**2)+V)
 t_f=L/(2*v_g)
 x=np.linspace(0,L,N)
 N_t=int(t_f/dt)
 x_s=5
 s=1.5
+
+l=L/50
+
+def n_rec_pus(fra, til, før, bred, mel, ant,amp,N):
+    w=np.linspace(fra,til,N)
+    V=np.array(np.zeros(len(w)))
+    n=0
+    for i in w:  
+        if i>=før and i<=før+bred:
+            f=w.tolist().index(i)
+            V[f]=amp
+        if i>før+bred:
+            før+=bred+mel
+            n+=1
+            if n==ant:
+                break
+    return V
 
 def innitsialverdi():
     pI=np.e**(-(x-x_s)**2/(2*s**2))*np.sin(k_0*x-0)
@@ -36,12 +54,11 @@ def propagering(pI,prdt):
     I[0]=pI
     R[0]=prdt
     for i in range(N_t):
-        I[i+1][1:N-1]=I[i][1:N-1]+dt*h/(2*m)*(R[i][2:]-2*R[i][1:N-1]+R[i][:N-2])/(dx**2)
-        R[i+1][1:N-1]=R[i][1:N-1]-dt*h/(2*m)*(I[i+1][2:]-2*I[i+1][1:N-1]+I[i+1][:N-2])/(dx**2)
+        I[i+1][1:N-1]=I[i][1:N-1]+dt*(h/(2*m)*(R[i][2:]-2*R[i][1:N-1]+R[i][:N-2])/(dx**2)-V[1:N-1]/h*R[i][1:N-1])
+        R[i+1][1:N-1]=R[i][1:N-1]-dt*(h/(2*m)*(I[i+1][2:]-2*I[i+1][1:N-1]+I[i+1][:N-2])/(dx**2)-V[1:N-1]/h*I[i+1][1:N-1])
     return I,R
+
+V=n_rec_pus(0,L,L/2-l/2,l,1,1,V,N)
 I,r,R=innitsialverdi()
 I,R=normaliserin(I,r,R)
 I,R=propagering(I,R)
-
-plt.plot(x,I[N_t-1])
-plt.plot(x,R[N_t-1])
