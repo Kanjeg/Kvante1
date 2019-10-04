@@ -1,0 +1,47 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+N=1200
+L=20
+m=1
+h=1
+k_0=20
+s=1.5
+E=k_0**2*h**2/(2*m)
+w=E/h
+dx=L/(N-1)
+v_g=k_0*h/m
+dt=0.01*h/(h**2/(2*m*dx**2))
+t_f=L/(2*v_g)
+x=np.linspace(0,L,N)
+N_t=int(t_f/dt)
+x_s=5
+s=1.5
+
+def innitsialverdi():
+    pI=np.e**(-(x-x_s)**2/(2*s**2))*np.sin(k_0*x-0)
+    pr=np.e**(-(x-x_s)**2/(2*s**2))*np.cos(k_0*x-0)
+    prdt=np.e**(-(x-x_s)**2/(2*s**2))*np.cos(k_0*x-w*dt/2)
+    pI[0],pr[0],prdt[0],pI[N-1],pr[N-1],prdt[N-1]=0,0,0,0,0,0
+    return pI,pr,prdt
+
+def normaliserin(pI,pr,prdt):
+    C=np.trapz(pI**2+pr**2,x)
+    pI,prdt=pI/np.sqrt(C),prdt/np.sqrt(C)
+    return pI,prdt
+
+def propagering(pI,prdt):
+    I=np.array([np.zeros(N)]*(N_t+10))
+    R=np.array([np.zeros(N)]*(N_t+10))
+    I[0]=pI
+    R[0]=prdt
+    for i in range(N_t):
+        I[i+1][1:N-1]=I[i][1:N-1]+dt*h/(2*m)*(R[i][2:]-2*R[i][1:N-1]+R[i][:N-2])/(dx**2)
+        R[i+1][1:N-1]=R[i][1:N-1]-dt*h/(2*m)*(I[i+1][2:]-2*I[i+1][1:N-1]+I[i+1][:N-2])/(dx**2)
+    return I,R
+I,r,R=innitsialverdi()
+I,R=normaliserin(I,r,R)
+I,R=propagering(I,R)
+
+plt.plot(x,I[N_t-1])
+plt.plot(x,R[N_t-1])
